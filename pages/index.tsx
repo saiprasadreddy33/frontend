@@ -7,13 +7,21 @@ export default function Home() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
 
+  type Notification = {
+    id: string;
+    message: string;
+    created_at: string;
+  };
+  
+  
   const fetchNotifications = async () => {
-    const res = await axios.get('http://localhost:4000/notifications/user1');
+    const res = await axios.get<Notification[]>('https://backend-insyd.onrender.com/notifications/user1');
     setNotifications(res.data);
   };
+  
 
   const trigger = async () => {
-    await axios.post('http://localhost:4000/notifications', {
+    await axios.post('https://backend-insyd.onrender.com/notifications', {
       userId: 'user1',
       actorId: 'actor1',
       type,

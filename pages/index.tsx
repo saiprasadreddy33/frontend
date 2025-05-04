@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaBell } from 'react-icons/fa';
-
+import { supabase } from '../lib/supabaseClient';
 export default function Home() {
   const [type, setType] = useState('follow');
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -18,7 +18,25 @@ export default function Home() {
     const res = await axios.get<Notification[]>('https://backend-insyd.onrender.com/notifications/user1');
     setNotifications(res.data);
   };
-  
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: 'user_id=eq.user1' },
+        (payload) => {
+          setNotifications((prev) => [payload.new, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   const trigger = async () => {
     await axios.post('https://backend-insyd.onrender.com/notifications', {
@@ -26,12 +44,8 @@ export default function Home() {
       actorId: 'actor1',
       type,
     });
-    await fetchNotifications(); 
   };
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
 
   return (
     <div style={{ padding: 24, position: 'relative' }}>
